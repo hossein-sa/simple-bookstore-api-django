@@ -4,18 +4,25 @@ from books.models import Publisher, Book, Wishlist
 from django.contrib.auth.models import User
 from books.schemas import PublisherSchemaOut, PublisherSchemaIn, BookSchemaIn, BookSchemaOut, WishlistSchemaOut, BookSchemaPartialUpdate, UserSchema
 from ninja.errors import HttpError
+from ninja_jwt.authentication import JWTAuth
+from ninja_jwt.routers.obtain import obtain_pair_router
+
 
 # Initialize the main API
 api = NinjaAPI()
 
+
+api.add_router("/token", tags=["Auth"], router=obtain_pair_router)
+
+
 # Create separate routers for better organization
-publisher_router = Router(tags=["Publishers"])
-book_router = Router(tags=["Books"])
-wishlist_router = Router(tags=["Wishlist"])
-user_router = Router(tags=["Users"])
+publisher_router = Router(tags=["Publishers"], auth=JWTAuth())
+book_router = Router(tags=["Books"], auth=JWTAuth())
+wishlist_router = Router(tags=["Wishlist"], auth=JWTAuth())
+user_router = Router(tags=["Users"], auth=JWTAuth())
 
 # Publisher CRUD Operations
-@publisher_router.get("/", response=List[PublisherSchemaOut])
+@publisher_router.get("/", response=List[PublisherSchemaOut], auth=None)
 def list_publishers(request):
     return Publisher.objects.all()
 
@@ -46,7 +53,7 @@ def delete_publisher(request, publisher_id: int):
 
 
 # Book CRUD Operations
-@book_router.get("/", response=List[BookSchemaOut])
+@book_router.get("/", response=List[BookSchemaOut], auth=None)
 def list_books(request):
     return Book.objects.select_related('publisher').all()
 
